@@ -131,13 +131,13 @@ class InvoiceDetector:
         else:
             x, y, w, h = cv2.boundingRect(invoice_cnt)
             pts = np.array([
-                [x + w, y], [x, y],
-                [x, y + h], [x + w, y + h]
+                [x, y], [x, y+h],
+                [x + w, y + h], [x + w, y]
             ], dtype='int32')
 
         transformer = FourPointTransformer()
         warped_img = transformer.transform(img, pts)
-        return warped_img
+        return warped_img, pts[0].tolist()
 
 
 class InvoiceOCR:

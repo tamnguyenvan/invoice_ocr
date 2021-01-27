@@ -29,10 +29,16 @@ def read_text(img):
     """
     """
     # Detect invoice contour
-    invoice_roi = detector.detect(img)
+    invoice_roi, (x_offset, y_offset) = detector.detect(img)
+    results = []
     if invoice_roi is not None:
         # Recognize
-        results = recognizer.recognize(invoice_roi)
+        raw_results = recognizer.recognize(invoice_roi)
+        for box, text in raw_results:
+            x, y, w, h = box
+            x += x_offset
+            y += y_offset
+            results.append(((x, y, w, h), text))
         return results
 
 
@@ -75,14 +81,15 @@ async def process(file: UploadFile = File(...)):
 
     # Recognize image
     results = read_text(image)
-    for box, text in results:
-        x, y, w, h = box
-        box_data = {
-            'x': x,
-            'y': y,
-            'w': w,
-            'h': h,
-            'text': text
-        }
-        data['results'].append(box_data)
+    if results:
+        for box, text in results:
+            x, y, w, h = box
+            box_data = {
+                'x': x,
+                'y': y,
+                'w': w,
+                'h': h,
+                'text': text
+            }
+            data['results'].append(box_data)
     return data
