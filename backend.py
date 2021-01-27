@@ -106,14 +106,12 @@ class InvoiceDetector:
         mask[h-N:, :] = 0
         mask[:, :N] = 0
         mask[:, w-N:] = 0
-        cv2.imwrite('mask.png', mask)
 
         # Detect contours
         cnts = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         cnts = imutils.grab_contours(cnts)
         img_copy = img.copy()
         cv2.drawContours(img_copy, cnts, -1, (0, 255, 0), 1)
-        cv2.imwrite('contours.png', img_copy)
 
         rect_detector = RectangleDetector()
         rect_cnts = []
@@ -139,7 +137,6 @@ class InvoiceDetector:
 
         transformer = FourPointTransformer()
         warped_img = transformer.transform(img, pts)
-        cv2.imwrite('warped.png', warped_img)
         return warped_img
 
 
