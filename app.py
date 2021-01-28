@@ -1,6 +1,8 @@
 """
 """
+import os
 import io
+import json
 
 import yaml
 import cv2
@@ -24,12 +26,21 @@ if method not in ('tesseract', 'easyocr'):
     method = 'tesseract'
 recognizer = InvoiceOCR(method=method)
 
+# Create storage directory
+storage_dir = config.get('storage', 'images')
+if not os.path.exists(storage_dir):
+    os.makedirs(storage_dir, exist_ok=True)
 
-def read_text(img):
+
+def read_text(img, filename, save_image=True):
     """
     """
     # Detect invoice contour
     invoice_roi, (x_offset, y_offset) = detector.detect(img)
+    if save_image:
+        out_path = os.path.join(storage_dir, filename)
+        cv2.imwrite(out_path, invoice_roi)
+
     results = []
     if invoice_roi is not None:
         # Recognize
@@ -73,23 +84,30 @@ async def process(file: UploadFile = File(...)):
     }
     ```
     """
-    data = {'sucess': False, 'results': []}
-
-    contents = await file.read()
-    arr = np.fromstring(contents, np.uint8)
-    image = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+    try:
+        contents = await file.read()
+    except:
+        return 'Read image failed'
+    
+    try:
+        arr = np.fromstring(contents, np.uint8)
+        image = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+    except:
+        return 'Decode image failed'
 
     # Recognize image
-    results = read_text(image)
-    if results:
-        for box, text in results:
-            x, y, w, h = box
-            box_data = {
-                'x': x,
-                'y': y,
-                'w': w,
-                'h': h,
-                'text': text
-            }
-            data['results'].append(box_data)
+    filename = file.filename
+    results = read_text(image, filename)
+    try:
+        data = ''
+        if results:
+            num_texts = 0
+            for box, text in results:
+                num_texts += 1
+                x, y, w, h = box
+                box_data = '{} {} {} {} {}'.format(x, y, w, h, text)
+                data += box_data + '\n'
+    except:
+        return 'Text extraction failed'
+    
     return data
