@@ -9,6 +9,7 @@ import cv2
 import numpy as np
 from typing import Optional
 from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi.responses import PlainTextResponse
 from starlette.requests import Request
 from PIL import Image
 
@@ -60,7 +61,7 @@ def index():
 
 
 @app.post('/read-text')
-async def process(file: UploadFile = File(...)):
+async def process(file: UploadFile = File(...), response_class=PlainTextResponse):
     """Process image and returns extracted data.
 
     Upload command:

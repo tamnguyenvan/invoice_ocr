@@ -141,9 +141,10 @@ class InvoiceDetector:
 
 
 class InvoiceOCR:
-    def __init__(self, method='tesseract'):
+    def __init__(self, method='tesseract', conf_thresh=0.8):
         self.method = method
         self.reader = None
+        self.conf_thresh = conf_thresh
         if self.method == 'easyocr':
             self.reader = easyocr.Reader(['en'])
     
@@ -158,9 +159,11 @@ class InvoiceOCR:
             num_texts = len(data['level'])
             for i in range(num_texts):
                 x, y, w, h = data['left'][i], data['top'][i], data['width'][i], data['height'][i]
+                conf = data['conf'][i]
                 text = data['text'][i]
-                if text is not None and isinstance(text, str) and len(text) > 0:
-                    results.append(((x, y, w, h), text))
+                if float(conf) > self.conf_thresh:
+                    if text is not None and isinstance(text, str) and len(text.strip()) > 0:
+                        results.append(((x, y, w, h), text))
         elif self.method == 'easyocr':
             data = self.reader.readtext(img)
             for rs in data:
