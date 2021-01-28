@@ -16,6 +16,7 @@ Please go to `http://localhost:80000/docs` to read the details. Sending an image
 curl -X POST "http://localhost:8000/read-text" \
     -H "accept: application/json" \
     -H "Content-Type: multipart/form-data" \
-    -F "file=@path/to/image"
+    -F "file=@path/to/image" \
+    awk '{gsub(/\\n/,"\n")}1'
 ```
 *Please replace the path with your own image path*
