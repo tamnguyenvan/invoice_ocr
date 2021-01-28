@@ -8,10 +8,10 @@ pip install -r requirements.txt
 ```
 
 # Run server
-Use this command to run server: `uvicorn app:app --port 8080`.
+Use this command to run server: `uvicorn app:app --port 8000`.
 
 # Quick start
-Please go to `http://localhost:80000/docs` to read the details. Sending an image:
+Please go to `http://localhost:8000/docs` to read the details. Sending an image:
 ```
 curl -X POST "http://localhost:8000/read-text" \
     -H "accept: application/json" \
