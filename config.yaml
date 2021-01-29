@@ -1,3 +1,4 @@
 method: tesseract
 storage: images/
 cell_gap: 50
+response_type: json

@@ -142,31 +142,62 @@ async def process(file: UploadFile = File(...), response_class=PlainTextResponse
     }
     ```
     """
+    response_type = config.get('response_type', 'text')
+    message = ''
+    if response_type == 'text':
+        message = ''
+    else:
+        ret = {'status': False, 'data': None, 'message': None}
+
     try:
         contents = await file.read()
     except:
-        return 'Read image failed'
+        message = 'Read image failed'
+        if response_type == 'text':
+            return message
+        else:
+            ret['message'] = message
+            return ret
     
     try:
         arr = np.fromstring(contents, np.uint8)
         image = cv2.imdecode(arr, cv2.IMREAD_COLOR)
     except:
-        return 'Decode image failed'
+        message = 'Decode image failed'
+        if response_type == 'text':
+            return message
+        else:
+            ret['message'] = message
+            return ret
 
     # Recognize image
     filename = file.filename
     results = read_text(image, filename)
-    # try:
-    data = ''
-    if results:
-        # num_texts = 0
-        # for box, text in results:
-        #     num_texts += 1
-        #     x, y, w, h = box
-        #     box_data = '{} {} {} {} {}'.format(x, y, w, h, text)
-        #     data += box_data + '\n'
-        data = format_result(results, config.get('cell_gap', 50))
-    # except:
-    #     return 'Text extraction failed'
+    try:
+        if results:
+            if response_type == 'text':
+                message = format_result(results, config.get('cell_gap', 50))
+                return message
+            else:
+                ret['data'] = []
+                ret['message'] = 'succesed'
+                ret['status'] = True
+                for box, text in results:
+                    x, y, w, h = box
+                    ret['data'].append({
+                        'x': x,
+                        'y': y,
+                        'w': w,
+                        'h': h,
+                        'text': text
+                    })
+                return ret
+    except:
+        message = 'Text extraction failed'
+        if response_type == 'text':
+            return message
+        else:
+            ret['message'] = message
+            return ret
     
-    return data
+    return ret
