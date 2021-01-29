@@ -169,6 +169,12 @@ class InvoiceOCR:
         except:
             pass
 
+        # Thresholding
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        thresh = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+        img = thresh
+        cv2.imwrite('thresh.png', thresh)
+
         results = []
         if self.method == 'tesseract':
             data = pytesseract.image_to_data(img, lang='eng',
