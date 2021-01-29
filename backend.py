@@ -169,9 +169,13 @@ class InvoiceOCR:
         except:
             pass
 
-        # Thresholding
+        # # Thresholding
+        # gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        # thresh = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+        # img = thresh
+        # cv2.imwrite('thresh.png', thresh)
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        thresh = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+        thresh = cv2.equalizeHist(gray)
         img = thresh
         cv2.imwrite('thresh.png', thresh)
 
