@@ -1,2 +1,3 @@
 method: tesseract
 storage: images/
+cell_gap: 50

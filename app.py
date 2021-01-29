@@ -13,7 +13,7 @@ from fastapi.responses import PlainTextResponse
 from starlette.requests import Request
 from PIL import Image
 
-from backend import InvoiceDetector, InvoiceOCR
+from backend import InvoiceDetector, InvoiceOCR 
 
 app = FastAPI()
 
@@ -52,6 +52,60 @@ def read_text(img, filename, save_image=True):
             y += y_offset
             results.append(((x, y, w, h), text))
         return results
+
+
+def format_result(results, cell_gap=30):
+    """
+    """
+    transform_data = []
+    for box, text in results:
+        x, y, w, h = box
+        left = x
+        bottom = y + h
+        top = y
+        transform_data.append((left, top, bottom, x, y, w, h, text))
+    
+    # Sort by y-axis
+    row_data = sorted(transform_data, key=lambda x: x[1])
+
+    # Gather texts are in the same line
+    table_data = []
+    row = []
+    prev_bottom = None
+    max_x = 0
+    for cell in row_data:
+        x_index = cell[3] // cell_gap
+        if x_index > max_x:
+            max_x = x_index
+        
+        if prev_bottom is None:
+            row = [cell[3:]]
+            prev_bottom = cell[2]
+        else:
+            if cell[1] > prev_bottom:
+                # New row
+                table_data.append(sorted(row, key=lambda x: x[0]))
+                row = [cell[3:]]
+                prev_bottom = cell[2]
+            else:
+                # Same row
+                row.append(cell[3:])
+    
+    grid = [[' ' for _ in range(max_x+1)] for _ in range(len(table_data)+1)]
+    for i, row in enumerate(table_data):
+        for cell in row:
+            x_index = cell[0] // cell_gap
+            text = cell[-1]
+            if 0 <= x_index <= max_x:
+                if grid[i][x_index] != ' ':
+                    grid[i][x_index] += ' ' + text
+                else:
+                    grid[i][x_index] = text
+    
+    result_str = ''
+    for row in grid:
+        result_str += ''.join([text for text in row]) + '\n'
+    return result_str
 
 
 @app.get("/")
@@ -99,16 +153,17 @@ async def process(file: UploadFile = File(...), response_class=PlainTextResponse
     # Recognize image
     filename = file.filename
     results = read_text(image, filename)
-    try:
-        data = ''
-        if results:
-            num_texts = 0
-            for box, text in results:
-                num_texts += 1
-                x, y, w, h = box
-                box_data = '{} {} {} {} {}'.format(x, y, w, h, text)
-                data += box_data + '\n'
-    except:
-        return 'Text extraction failed'
+    # try:
+    data = ''
+    if results:
+        # num_texts = 0
+        # for box, text in results:
+        #     num_texts += 1
+        #     x, y, w, h = box
+        #     box_data = '{} {} {} {} {}'.format(x, y, w, h, text)
+        #     data += box_data + '\n'
+        data = format_result(results, config.get('cell_gap', 50))
+    # except:
+    #     return 'Text extraction failed'
     
     return data

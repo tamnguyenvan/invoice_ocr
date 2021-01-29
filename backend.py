@@ -1,10 +1,13 @@
 """
 """
 import os
+import argparse
+import tempfile
+
 import cv2
 import numpy as np
 import imutils
-import argparse
+from PIL import Image
 
 tessdata_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'tessdata'))
 os.environ['TESSDATA_PREFIX'] = tessdata_dir
@@ -148,9 +151,24 @@ class InvoiceOCR:
         if self.method == 'easyocr':
             self.reader = easyocr.Reader(['en'])
     
+    def _enhance_image(self, img):
+        """
+        :img: numpy array
+        """
+        pil_image = Image.fromarray(img)
+        temp_file = tempfile.NamedTemporaryFile(suffix='invoice.png')
+        filename = temp_file.name
+        pil_image.save(filename, dpi=(300, 300))
+        return np.array(Image.open(filename))
+    
     def recognize(self, img):
         """
         """
+        try:
+            img = self._enhance_image(img)
+        except:
+            pass
+
         results = []
         if self.method == 'tesseract':
             data = pytesseract.image_to_data(img, lang='eng',
@@ -210,7 +228,7 @@ def main():
     
     # Detect invoice contour
     invoice_detector = InvoiceDetector()
-    invoice_roi = invoice_detector.detect(img)
+    invoice_roi, _ = invoice_detector.detect(img)
     if invoice_roi is not None:
         # Recognize
         recognizer = InvoiceOCR(method=args.method)
