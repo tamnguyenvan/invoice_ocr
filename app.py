@@ -39,6 +39,9 @@ def read_text(img, filename, save_image=True):
     # Detect invoice contour
     invoice_roi, (x_offset, y_offset) = detector.detect(img)
     if save_image:
+        ext = os.path.splitext(filename)[1]
+        if not ext:
+            filename = filename + '.png'
         out_path = os.path.join(storage_dir, filename)
         cv2.imwrite(out_path, invoice_roi)
 
